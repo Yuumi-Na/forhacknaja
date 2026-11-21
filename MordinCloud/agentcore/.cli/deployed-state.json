@@ -1,0 +1,17 @@
+{
+  "targets": {
+    "default": {
+      "resources": {
+        "runtimes": {
+          "Mordin": {
+            "runtimeId": "MordinCloud_Mordin-gyTTYRFKYX",
+            "runtimeArn": "arn:aws:bedrock-agentcore:ap-southeast-1:788080238277:runtime/MordinCloud_Mordin-gyTTYRFKYX",
+            "roleArn": "arn:aws:iam::788080238277:role/AgentCore-MordinCloud-def-ApplicationAgentMordinRun-9CBPwpB4Tg0F"
+          }
+        },
+        "stackName": "AgentCore-MordinCloud-default",
+        "deployHash": "75a2d33055ae47dd"
+      }
+    }
+  }
+}

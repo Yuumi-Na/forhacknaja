@@ -14,6 +14,8 @@ REGION = "ap-southeast-1"
 READER_MAX_TOKENS = 1024
 EXPLAINER_MAX_TOKENS = 1500
 
+AGENT_RUNTIME_ARN_ENV = "MORDIN_AGENT_RUNTIME_ARN"
+AGENT_READ_TIMEOUT_SECONDS = 25
 _FORBIDDEN_PREFIXES = ("global.", "apac.")
 
 
@@ -34,6 +36,19 @@ def guard(model_id: str, region: str) -> None:
 def vision_stub_enabled() -> bool:
     """True when MORDIN_VISION_STUB=1 (default off, so the app calls Bedrock)."""
     return os.environ.get("MORDIN_VISION_STUB", "").strip() == "1"
+
+
+def agent_runtime_arn() -> str:
+    """ARN of the deployed AgentCore runtime, from MORDIN_AGENT_RUNTIME_ARN (see `agentcore status`).
+
+    Not a secret, but it names the team account, so it is set in the environment, not in code.
+    """
+    arn = os.environ.get(AGENT_RUNTIME_ARN_ENV, "").strip()
+    if not arn:
+        raise ConfigError(f"{AGENT_RUNTIME_ARN_ENV} is not set")
+    if not arn.startswith(f"arn:aws:bedrock-agentcore:{REGION}:"):
+        raise ConfigError(f"{AGENT_RUNTIME_ARN_ENV} must be an AgentCore ARN in {REGION}")
+    return arn
 
 
 def make_bedrock_model(max_tokens: int):

@@ -52,7 +52,21 @@ class ExplainFailed:
     reason: str = ""
 
 
-Event = Text | Button | ImageUploaded | ReadSucceeded | ReadFailed | Explained | ExplainFailed
+@dataclass(frozen=True)
+class AgentReplied:
+    """Reply text from the deployed chat agent. Shown as is, never used for any calculation."""
+    text: str
+
+
+@dataclass(frozen=True)
+class AgentFailed:
+    reason: str = ""
+
+
+Event = (
+    Text | Button | ImageUploaded | ReadSucceeded | ReadFailed | Explained | ExplainFailed
+    | AgentReplied | AgentFailed
+)
 
 
 # --- Commands ---------------------------------------------------------------
@@ -66,7 +80,13 @@ class BuildAdvice:
     pass
 
 
-Command = ReadImage | BuildAdvice
+@dataclass(frozen=True)
+class AskAgent:
+    """Send typed text that answers no pending step to the deployed agent."""
+    text: str
+
+
+Command = ReadImage | BuildAdvice | AskAgent
 
 
 # --- Reply specs ------------------------------------------------------------

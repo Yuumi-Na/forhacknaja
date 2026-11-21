@@ -29,7 +29,17 @@ $env:MORDIN_VISION_STUB = "1"
 uv run mordin
 ```
 
+## Chat agent on AgentCore Runtime
+Typed text that does not answer a pending step (field size, manual values, a correction) goes to the agent deployed on AgentCore Runtime. The call is `InvokeAgentRuntime` in `ap-southeast-1` (`src/mordin/explain/chat.py`). It uses your normal AWS sign-in (`aws login`). No credentials are in the code.
+
+Set the runtime ARN (shown by `agentcore status` in `MordinCloud/`) before you start the app:
+```
+$env:MORDIN_AGENT_RUNTIME_ARN = "arn:aws:bedrock-agentcore:ap-southeast-1:<account>:runtime/<runtime id>"
+```
+If the ARN is not set, the agent is unreachable or the stub switch is on, the app shows the fixed "please press a button" reply.
+
 ## Flows
+
 
 - **A. Lab sheet photo:** the AI reads the soil values and the fertilizer formula and rate printed on the sheet. The farmer confirms or edits them, then gives the field size. The sheet's rate is multiplied by the field size, not recalculated.
 - **B. Manual, full values:** the farmer types soil values. The basic sugarcane formula gives the rate, then the totals for the field.

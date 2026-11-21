@@ -1,6 +1,9 @@
 from mordin.flows.reducer import reduce
 from mordin.flows.session import Pending, Session, SheetItem, State
 from mordin.flows.types import (
+    AgentFailed,
+    AgentReplied,
+    AskAgent,
     BuildAdvice,
     Button,
     ButtonSpec,
@@ -18,6 +21,9 @@ from mordin.flows.types import (
 )
 
 __all__ = [
+    "AgentFailed",
+    "AgentReplied",
+    "AskAgent",
     "BuildAdvice",
     "Button",
     "ButtonSpec",

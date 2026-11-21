@@ -4,6 +4,7 @@ import pytest
 
 from mordin.data import load_data
 from mordin.flows import (
+    AskAgent,
     BuildAdvice,
     Button,
     Explained,
@@ -331,12 +332,12 @@ def test_invalid_change_keeps_old_area():
     assert dropped.session.state == State.RESULT_SENT and dropped.session.pending is None
 
 
-# --- typed text without a pending step ---
+# --- typed text without a pending step goes to the chat agent (no reply, no state change) ---
 @pytest.mark.parametrize("session", [Session(), at_confirm().session, at_result().session])
-def test_text_without_pending_gets_choose_button_reply(session):
+def test_text_without_pending_asks_the_agent(session):
     step = reduce(session, Text("สวัสดี"), DATA)
-    assert keys(step) == ["input.choose_button"]
-    assert step.commands == []
+    assert keys(step) == []
+    assert step.commands == [AskAgent("สวัสดี")]
     assert step.session.state == session.state
 
 

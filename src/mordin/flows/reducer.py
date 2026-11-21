@@ -24,6 +24,9 @@ from mordin.fertilizer.area import AreaError, parse_area
 from mordin.fertilizer.routing import NeedMoreValues, choose_path
 from mordin.flows.session import Pending, Session, SheetItem, State
 from mordin.flows.types import (
+    AgentFailed,
+    AgentReplied,
+    AskAgent,
     BuildAdvice,
     Button,
     ButtonSpec,
@@ -557,7 +560,10 @@ def _on_correction_text(s: Session, text: str, data: Data) -> Step:
 
 def _on_text(s: Session, ev: Text, data: Data) -> Step:
     if s.pending is None:
-        return _step(s, _choose_button())
+        # Text that answers no pending step is chat. Every figure in the flow still comes from code.
+        if not ev.text.strip():
+            return _step(s, _choose_button())
+        return _step(s, commands=[AskAgent(ev.text)])
     if s.pending.kind == "area_answer":
         return _on_area_text(s, ev.text)
     if s.pending.kind == "manual_values":
@@ -581,6 +587,10 @@ def _on_explain_failed(s: Session) -> Step:
     s.state = State.FAILED
     s.pending = None
     return _step(s, Reply("error.advice_failed", buttons=[_restart_btn()]))
+
+
+def _on_agent_failed(s: Session) -> Step:
+    return _step(s, _choose_button())  # the same fixed reply as when no agent is set up
 
 
 def _dead(s: Session) -> Step:
@@ -609,6 +619,10 @@ def reduce(session: Session, event: Event, data: Data) -> Step:
         return _on_explained(s, event)
     if isinstance(event, ExplainFailed):
         return _on_explain_failed(s)
+    if isinstance(event, AgentReplied):
+        return _step(s)  # the service shows the text; the session does not change
+    if isinstance(event, AgentFailed):
+        return _on_agent_failed(s)
 
     if isinstance(event, Button) and event.action == "manual_entry":
         return _start_manual(s, data)

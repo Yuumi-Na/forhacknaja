@@ -1,7 +1,8 @@
-﻿from decimal import Decimal
+from decimal import Decimal
 
 from mordin.data import load_data
 from mordin.flows import (
+    AskAgent,
     BuildAdvice,
     Button,
     ImageUploaded,
@@ -82,7 +83,7 @@ def test_three_misses_return_to_buttons():
     step = run(s, Text("abc"))
     assert step.session.pending is None
     assert keys(step)[-1] == "manual.too_many"
-    assert run(step.session, Text("om 1")).replies[0].key == "input.choose_button"
+    assert run(step.session, Text("om 1")).commands == [AskAgent("om 1")]
 
 
 def test_done_with_full_values_goes_to_area_without_totals():

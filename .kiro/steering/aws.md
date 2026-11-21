@@ -15,3 +15,12 @@ inclusion: always
 - Never delete or change anything in the team account without asking.
 - The AgentCore CLI is pinned at 0.30.0 (code agents, CodeZip). Do not install `@latest` or `@preview`, and do not switch to
   Harness commands, unless asked. If a skill says otherwise, tell me and wait.
+
+## agentcore.json
+- ALWAYS run `agentcore validate` after editing `agentcore.json`.
+- Runtime `envVars` are arrays of name/value objects:
+  `"envVars": [{ "name": "KEY", "value": "VALUE" }]`
+- NEVER write `${SHELL_VARIABLE}` or `${PARAM}` placeholders into `agentcore.json`. The CLI does not expand environment
+  variables in this file. Placeholders pass unchanged into the deployed CDK stack and the runtime IAM policy, which causes
+  AccessDenied errors at invoke time. Resolve the value first (for example, run the lookup CLI command to get the real
+  memory ID) and write the literal value into `agentcore.json`.

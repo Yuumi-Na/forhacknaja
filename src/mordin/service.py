@@ -16,6 +16,7 @@ from typing import Any, Callable
 from mordin import config
 from mordin.data import Data, load_data
 from mordin.explain import messages
+from mordin.explain.chat import ask_agent
 from mordin.explain.advice import ModelCaller, build_advice, default_model_caller
 from mordin.fertilizer.amendments import build_ph_plan
 from mordin.fertilizer.formula import calculate_basic, soil_status
@@ -24,6 +25,9 @@ from mordin.fertilizer.routing import NeedMoreValues, choose_path
 from mordin.fertilizer.sheet_plan import build_sheet_plan
 from mordin.fertilizer.totals import compute_item
 from mordin.flows import (
+    AgentFailed,
+    AgentReplied,
+    AskAgent,
     BuildAdvice,
     Command,
     Event,
@@ -53,6 +57,8 @@ WARN_AFTER_SECONDS = 30.0
 MAX_COMMAND_ROUNDS = 10  # guard against a loop between reducer and commands
 
 Bubble = dict[str, Any]
+# Takes the user's text and the app session id, returns the agent's reply. Injected in tests.
+AgentCaller = Callable[[str, str], str]
 
 
 class PlanError(Exception):
@@ -164,6 +170,7 @@ class Service:
         *,
         stub: bool | None = None,
         model_caller: ModelCaller | None = None,
+        agent_caller: AgentCaller | None = None,
         holder: ImageHolder | None = None,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
@@ -174,6 +181,8 @@ class Service:
         self.model_caller = (
             model_caller if model_caller is not None or self.stub else default_model_caller
         )
+        # The stub run makes no network call, so it has no agent either (the fixed reply is shown).
+        self.agent_caller = agent_caller if agent_caller is not None or self.stub else ask_agent
         self.holder = holder if holder is not None else ImageHolder()
         self._clock = clock
 
@@ -264,6 +273,8 @@ class Service:
                 result_step = reduce(session, ev, self.data)
                 if isinstance(ev, Explained) and result_step.session.state == State.RESULT_SENT:
                     bubbles.extend(messages.render_advice(ev.advice))
+                if isinstance(ev, AgentReplied):
+                    bubbles.append({"kind": "text", "text": ev.text, "buttons": []})
                 session = result_step.session
                 self._after_reduce(old_id, session)
                 self._add_replies(bubbles, result_step)
@@ -293,7 +304,10 @@ class Service:
         elif isinstance(cmd, BuildAdvice):
             ev = self._explain(session)
             name = "explain"
-        else:  # pragma: no cover - the Command union has two members
+        elif isinstance(cmd, AskAgent):
+            ev = self._ask(cmd, session)
+            name = "agent"
+        else:  # pragma: no cover - the Command union has three members
             raise TypeError(type(cmd).__name__)
         return ev, name, self._clock() - t0
 
@@ -310,6 +324,15 @@ class Service:
         except Exception as exc:
             self._log_failure("read", session.id, exc)
             return ReadFailed(reason=type(exc).__name__)
+
+    def _ask(self, cmd: AskAgent, session: Session) -> Event:
+        if self.agent_caller is None:
+            return AgentFailed(reason="no_agent")
+        try:
+            return AgentReplied(text=self.agent_caller(cmd.text, session.id))
+        except Exception as exc:  # a missing setting, network or agent failure shows the fixed reply
+            self._log_failure("agent", session.id, exc)
+            return AgentFailed(reason=type(exc).__name__)
 
     def _explain(self, session: Session) -> Event:
         try:
