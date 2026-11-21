@@ -1,0 +1,20 @@
+{
+    "om":  1,
+    "p":  10,
+    "k":  50,
+    "ca":  400,
+    "mg":  60,
+    "ph":  5.2,
+    "soil_texture":  "ทราย",
+    "sheet_recommendations":  [
+                                  {
+                                      "fertilizer":  "urea",
+                                      "rate_kg_per_rai":  20
+                                  },
+                                  {
+                                      "fertilizer":  "dap",
+                                      "rate_kg_per_rai":  10
+                                  }
+                              ],
+    "reason_code":  null
+}

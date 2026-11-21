@@ -1,0 +1,17 @@
+{
+  "label": "ตารางปรับปรุงดินตัวอย่างสำหรับสาธิต ไม่ใช่คำแนะนำจริง รอผู้เชี่ยวชาญรับรอง",
+  "placeholder": true,
+  "date": "2025-01-01",
+  "ph_limits": {
+    "acidic_below": 6.0,
+    "alkaline_above": 6.5
+  },
+  "materials": {
+    "acidic": [
+      {"key": "agri_lime", "rate_kg_per_rai": 100, "max_rate_kg_per_rai": 300},
+      {"key": "dolomite", "rate_kg_per_rai": 80, "max_rate_kg_per_rai": 250}
+    ],
+    "balanced": [],
+    "alkaline": []
+  }
+}

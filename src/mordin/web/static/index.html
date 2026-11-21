@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>หมอดิน AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page: #E6E8EB;
+  --chat-top: #8FAFD6;
+  --chat-bottom: #7E9FCB;
+  --bubble-bot: #FFFFFF;
+  --user-top: #12C866;
+  --user-bottom: #06B356;
+  --text: #1E2A22;
+  --text-muted: #6B7A70;
+  --green: #06C755;
+  --green-dark: #0B7A3B;
+  --green-soft: #EEF8F1;
+  --tile: #F3F6F4;
+  --line: #E3E8E5;
+  --note-bg: #FFF4CC;
+  --note-text: #5A4500;
+  --error: #B00020;
+  --font: "Kanit", "Noto Sans Thai", "Leelawadee UI", "Tahoma", sans-serif;
+  --fs-body: 17px;
+  --fs-small: 14px;
+  --btn-height: 46px;
+  --gap: 8px;
+  --bubble-max: 84%;
+  --radius: 18px;
+  --shadow: 0 2px 6px rgba(20, 40, 30, 0.12);
+  --col-max: 480px;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg-page);
+  font-family: var(--font); font-weight: 400;
+  font-size: var(--fs-body); line-height: 1.55; color: var(--text);
+}
+button, input, textarea { font-family: var(--font); }
+#app {
+  display: flex; flex-direction: column;
+  height: 100%; height: 100dvh;
+  max-width: var(--col-max); margin: 0 auto;
+  background: linear-gradient(180deg, var(--chat-top), var(--chat-bottom));
+  overflow: hidden;
+}
+@media (min-width: 520px) {
+  #app { height: calc(100dvh - 24px); margin: 12px auto; border-radius: 22px; box-shadow: 0 6px 24px rgba(0,0,0,0.18); }
+}
+
+/* header */
+header {
+  flex: none; display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; color: #fff;
+  background: linear-gradient(135deg, #1BD06B, #04B04E);
+}
+.avatar {
+  flex: none; width: 38px; height: 38px; border-radius: 50%;
+  background: #E8F9EE; border: 2px solid rgba(255,255,255,0.8);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.htext { flex: 1; min-width: 0; }
+header h1 { margin: 0; font-size: 19px; font-weight: 600; line-height: 1.2; }
+header .sub { font-size: 12px; font-weight: 300; opacity: 0.95; }
+.badge {
+  display: inline-block; margin-left: 6px; vertical-align: middle;
+  background: var(--note-bg); color: var(--note-text);
+  font-size: 11px; padding: 0 8px; border-radius: 999px;
+}
+#restart {
+  flex: none; width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); color: #fff; font-size: 22px;
+  border: 2px solid rgba(255,255,255,0.85); cursor: pointer; line-height: 1;
+}
+
+/* chat */
+#chat { flex: 1; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; align-items: flex-start; gap: 8px; }
+.row.user { justify-content: flex-end; }
+.row .avatar { width: 32px; height: 32px; font-size: 16px; background: var(--green); border: 0; }
+.row .avatar.spacer { visibility: hidden; }
+.col { max-width: var(--bubble-max); display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+.bubble {
+  background: var(--bubble-bot); padding: 10px 16px; border-radius: var(--radius);
+  box-shadow: var(--shadow); white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.row.user .bubble {
+  background: linear-gradient(135deg, var(--user-top), var(--user-bottom));
+  color: #fff; font-weight: 500;
+}
+.bubble.error { border-left: 4px solid var(--error); }
+.bubble.error .title { color: var(--error); font-weight: 600; }
+.note {
+  background: var(--note-bg); color: var(--note-text); border-radius: 12px;
+  padding: 8px 12px; font-size: var(--fs-small); line-height: 1.5; white-space: pre-wrap;
+}
+.note.center { align-self: stretch; margin: 2px 4px; }
+.small { font-size: var(--fs-small); color: #fff; white-space: pre-wrap; padding: 0 4px; }
+.thumb { display: block; max-width: 150px; max-height: 150px; border-radius: 12px; margin-bottom: 4px; }
+
+/* bot reply buttons: white pills */
+.btns { display: flex; flex-wrap: wrap; gap: var(--gap); }
+.btn {
+  min-height: var(--btn-height); padding: 6px 18px; font-size: 16px; font-weight: 500;
+  border-radius: 999px; cursor: pointer; background: #fff; color: var(--green-dark);
+  border: 2px solid #CDEBD8; box-shadow: var(--shadow);
+}
+.btn.primary { background: var(--green); color: #fff; border-color: var(--green); }
+.btn.tertiary { color: var(--text-muted); border-color: var(--line); }
+.btn:disabled, .menu button:disabled, #restart:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:focus-visible, .menu button:focus-visible, #send:focus-visible, #text:focus-visible, #restart:focus-visible {
+  outline: 3px solid #1a5fd0; outline-offset: 2px;
+}
+
+/* cards */
+.card { background: #fff; border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
+.chead { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.cicon {
+  flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--green-soft);
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.ctitle { font-weight: 600; font-size: 17px; line-height: 1.3; }
+.csub { font-size: 12px; color: var(--text-muted); }
+.steps { display: flex; flex-direction: column; gap: 6px; }
+.step { background: var(--tile); border-radius: 10px; padding: 8px 12px; font-size: 15px; }
+.step b { color: var(--green-dark); margin-right: 8px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { background: var(--tile); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+.tile.wide { grid-column: 1 / -1; }
+.tile .tl { font-size: 13px; color: var(--text-muted); line-height: 1.3; }
+.tile .tv { font-size: 20px; font-weight: 600; color: var(--green-dark); overflow-wrap: anywhere; }
+.tile .tv.text { font-size: 17px; }
+.tile .ed { font-size: 11px; color: var(--note-text); background: var(--note-bg); border-radius: 999px; padding: 0 6px; margin-left: 4px; }
+.subhead { font-weight: 600; font-size: 15px; margin: 12px 0 6px; }
+.irow { display: flex; justify-content: space-between; gap: 8px; background: var(--tile); border-radius: 10px; padding: 8px 10px; margin-bottom: 6px; font-size: 15px; }
+.irow .rv { font-weight: 600; color: var(--green-dark); white-space: nowrap; }
+.warn { font-size: 13px; color: var(--error); margin: -2px 0 6px 4px; }
+.ask { background: var(--green-soft); border-radius: 10px; padding: 8px 12px; margin-top: 10px; }
+.ask .q { font-weight: 600; color: var(--green-dark); }
+.ask .n { font-size: 13px; color: var(--text-muted); }
+.cbody { white-space: pre-wrap; margin: 4px 0 10px; }
+.card .btn { box-shadow: none; }
+
+/* result table: one card per row */
+.result { display: flex; flex-direction: column; gap: var(--gap); }
+.result h2 { margin: 0; font-size: 16px; font-weight: 600; color: #fff; padding: 0 4px; }
+table.plan, table.plan tbody, table.plan tr, table.plan td { display: block; }
+table.plan thead { position: absolute; left: -9999px; }
+table.plan tbody { display: flex; flex-direction: column; gap: var(--gap); }
+table.plan tr { background: #fff; border-radius: 14px; padding: 10px 14px; box-shadow: var(--shadow); }
+table.plan tr.total { background: var(--green-soft); }
+table.plan td { padding: 1px 0; }
+table.plan td.name { font-weight: 600; color: var(--green-dark); }
+table.plan td.desc { font-size: var(--fs-small); color: var(--text-muted); }
+table.plan td[data-label]::before { content: attr(data-label) " "; color: var(--text-muted); }
+table.plan td.name::before, table.plan td.desc::before { content: ""; }
+/* pH summary card */
+.phbox { display: flex; align-items: center; gap: 14px; background: var(--tile); border-radius: 12px; padding: 10px 14px; }
+.phval { font-size: 40px; font-weight: 600; line-height: 1; color: var(--green-dark); }
+.phbox.acidic .phval { color: #E8772E; }
+.phbox.alkaline .phval { color: #3A6FD8; }
+.phhead { font-weight: 600; font-size: 15px; }
+.phrange { font-size: 13px; color: var(--text-muted); }
+.sec { border-radius: 12px; padding: 10px 14px; margin-top: 10px; }
+.sec .st { font-weight: 600; font-size: 15px; color: var(--green-dark); margin-bottom: 2px; }
+.sec .sb { font-size: 15px; white-space: pre-wrap; }
+.sec.warm { background: #FFF5E6; }
+.sec.warm .st { color: #9A5B12; }
+.sec.green { background: var(--green-soft); }
+.sec.plain { background: var(--tile); }
+.sec ul { margin: 4px 0 0; padding-left: 18px; font-size: 15px; }
+.sec li { margin-bottom: 4px; }
+.sec li b { color: var(--green-dark); font-weight: 600; }
+.nlist { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-muted); }
+.nlist li { margin-bottom: 4px; }
+.copybox { width: 100%; min-height: 120px; font-size: 16px; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+
+/* waiting dots */
+.dots { display: inline-flex; gap: 4px; margin-right: 8px; vertical-align: middle; }
+.dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); animation: blink 1.2s infinite ease-in-out; }
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dots span { animation: none; opacity: 0.7; } }
+
+/* footer: text input + 6-button menu */
+footer { flex: none; background: #fff; padding-bottom: env(safe-area-inset-bottom); }
+#inputbar { display: flex; gap: var(--gap); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+#text {
+  flex: 1; min-width: 0; min-height: var(--btn-height); font-size: 16px;
+  border: 1px solid #CFD8D3; border-radius: 999px; padding: 0 16px; background: #FAFCFB;
+}
+#send {
+  flex: none; min-width: 64px; min-height: var(--btn-height); font-size: 16px; font-weight: 500;
+  background: var(--green); color: #fff; border: 0; border-radius: 999px; cursor: pointer;
+}
+#send:disabled { opacity: 0.5; cursor: not-allowed; }
+.menu { display: grid; grid-template-columns: repeat(3, 1fr); }
+.menu button {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 76px; padding: 6px 4px; background: #fff; cursor: pointer;
+  border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.25;
+}
+.menu button:nth-child(3n) { border-right: 0; }
+.menu button:nth-child(n+4) { border-bottom: 0; }
+.menu button:active { background: var(--green-soft); }
+.menu .ic { font-size: 26px; line-height: 1.1; }
+#file { display: none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="avatar" aria-hidden="true">🧑‍🌾</div>
+    <div class="htext">
+      <h1>หมอดิน AI <span id="badge" class="badge" hidden>ข้อมูลตัวอย่าง</span></h1>
+      <div class="sub">ผู้ช่วยเกษตรกรปลูกอ้อย</div>
+    </div>
+    <button type="button" id="restart" aria-label="เริ่มใหม่" title="เริ่มใหม่">↻</button>
+  </header>
+  <main id="chat" aria-live="polite" aria-label="การสนทนา"></main>
+  <footer>
+    <form id="inputbar" autocomplete="off">
+      <input id="text" type="text" placeholder="พิมพ์ข้อความ หรือถามหมอดิน..." aria-label="พิมพ์ข้อความ" enterkeyhint="send">
+      <button id="send" type="submit">ส่ง</button>
+    </form>
+    <nav class="menu" aria-label="เมนู">
+      <button type="button" id="m-sheet"><span class="ic" aria-hidden="true">📷</span>ถ่ายรูปใบผลแล็บ</button>
+      <button type="button" id="m-ph"><span class="ic" aria-hidden="true">📟</span>ถ่ายรูปเครื่องวัด pH</button>
+      <button type="button" id="m-cane"><span class="ic" aria-hidden="true">📊</span>ราคาอ้อยวันนี้</button>
+      <button type="button" id="m-manual"><span class="ic" aria-hidden="true">✏️</span>พิมพ์ค่าด้วยตัวเอง</button>
+      <button type="button" id="m-guide"><span class="ic" aria-hidden="true">❓</span>วิธีใช้งาน</button>
+      <button type="button" id="m-chat"><span class="ic" aria-hidden="true">💬</span>ถามหมอดิน</button>
+    </nav>
+    <input id="file" type="file" accept="image/jpeg,image/png" aria-label="เลือกรูปใบตรวจดิน">
+  </footer>
+</div>
+<script>
+(function () {
+  "use strict";
+  var chat = document.getElementById("chat");
+  var fileInput = document.getElementById("file");
+  var textInput = document.getElementById("text");
+  var sessionId = null;
+  var busy = false;
+  var lastBotRow = false; // was the previous row a bot row (avatar already shown)
+
+  var AVATAR = "🧑‍🌾";
+  var WAIT_READ = "กำลังอ่านค่าจากรูป...";
+  var WAIT_THINK = "กำลังคิดคำแนะนำ...";
+  var SCRIPT_HEADING = "ประโยคสำหรับบอกร้านปุ๋ย:";
+  var ERR_TEXT = "ขออภัย ระบบขัดข้อง กรุณากดเริ่มใหม่";
+
+  // Fixed page texts (display only, no numbers from calculations).
+  var PHOTO_GUIDE = {
+    icon: "📷", title: "ถ่ายรูปใบผลแล็บ", sub: "จัดรูปให้ชัดก่อนส่ง",
+    steps: ["วางใบบนโต๊ะที่มีแสงสว่าง", "ถ่ายตรง ๆ ให้เห็นทั้งหน้าเอกสาร", "เช็กว่าตัวเลขไม่เบลอหรือมีแสงสะท้อน"]
+  };
+  var USAGE_GUIDE = {
+    icon: "❓", title: "วิธีใช้งาน", sub: "ทำตามทีละขั้น",
+    steps: [
+      "กด \"ถ่ายรูปใบผลแล็บ\" แล้วเลือกรูปใบวิเคราะห์ดิน หรือกด \"พิมพ์ค่าด้วยตัวเอง\"",
+      "ตรวจค่าที่อ่านได้ ถ้าไม่ตรงกับใบ ให้กด \"แก้ไขค่า\"",
+      "บอกขนาดแปลง เช่น 5 ไร่ หรือ 3 ไร่ 2 งาน",
+      "รับตารางปุ๋ย ปริมาณรวม ราคาโดยประมาณ และข้อความไปบอกร้านปุ๋ย",
+      "พิมพ์ \"เริ่มใหม่\" หรือกดปุ่ม ↻ ด้านบนเพื่อเริ่มใหม่ได้ทุกเมื่อ"
+    ]
+  };
+  var PH_NOT_READY = "การอ่านรูปเครื่องวัด pH ยังไม่เปิดในเดโมนี้ครับ ถ้ามีค่า pH แล้ว กด \"พิมพ์ค่าด้วยตัวเอง\" แล้วพิมพ์ เช่น ph 5.8 ได้เลย";
+  var CANE_NOT_READY = "ยังไม่มีข้อมูลราคาอ้อยในเดโมนี้ครับ เมื่อมีข้อมูลแล้ว จะแสดงราคากลางและราคาตามภูมิภาค พร้อมวันที่ของข้อมูล";
+  var CHAT_HINT = "พิมพ์คำถามในช่องด้านล่างได้เลยครับ";
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function scrollDown() { chat.scrollTop = chat.scrollHeight; }
+
+  function setBusy(on) {
+    busy = on;
+    var controls = document.querySelectorAll("footer button, footer input, #chat .btn, #restart");
+    for (var i = 0; i < controls.length; i++) controls[i].disabled = on;
+  }
+
+  function botRow() {
+    var row = el("div", "row bot");
+    var av = el("div", "avatar" + (lastBotRow ? " spacer" : ""), AVATAR);
+    av.setAttribute("aria-hidden", "true");
+    var col = el("div", "col");
+    row.appendChild(av); row.appendChild(col);
+    chat.appendChild(row);
+    lastBotRow = true;
+    return col;
+  }
+  function noteCard(text) {
+    chat.appendChild(el("div", "note center", text));
+    lastBotRow = false;
+  }
+  function userRow(text, thumbUrl) {
+    var row = el("div", "row user");
+    var col = el("div", "col");
+    var b = el("div", "bubble");
+    if (thumbUrl) {
+      var img = el("img", "thumb");
+      img.src = thumbUrl; img.alt = "รูปใบตรวจดินที่ส่ง";
+      b.appendChild(img);
+    }
+    if (text) b.appendChild(document.createTextNode(text));
+    col.appendChild(b); row.appendChild(col); chat.appendChild(row);
+    lastBotRow = false;
+    scrollDown();
+  }
+  function botText(text) {
+    botRow().appendChild(el("div", "bubble", text));
+    scrollDown();
+  }
+
+  function buttonClass(btn, index, all) {
+    if (btn.action === "cancel" || btn.action === "restart") return "tertiary";
+    var firstMain = -1;
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].action !== "cancel" && all[i].action !== "restart") { firstMain = i; break; }
+    }
+    return index === firstMain ? "primary" : "secondary";
+  }
+  function addButtons(col, buttons) {
+    var wrap = el("div", "btns");
+    buttons.forEach(function (b, i) {
+      var btn = el("button", "btn " + buttonClass(b, i, buttons), b.label);
+      btn.type = "button";
+      btn.addEventListener("click", function () { onBotButton(b); });
+      wrap.appendChild(btn);
+    });
+    col.appendChild(wrap);
+  }
+
+  function cardHead(card, icon, title, sub) {
+    var head = el("div", "chead");
+    head.appendChild(el("div", "cicon", icon));
+    var t = el("div");
+    t.appendChild(el("div", "ctitle", title));
+    if (sub) t.appendChild(el("div", "csub", sub));
+    head.appendChild(t);
+    card.appendChild(head);
+  }
+  function stepsCard(spec, buttons) {
+    var col = botRow();
+    var card = el("div", "card");
+    cardHead(card, spec.icon, spec.title, spec.sub);
+    var list = el("div", "steps");
+    spec.steps.forEach(function (s, i) {
+      var st = el("div", "step");
+      st.appendChild(el("b", null, (i < 9 ? "0" : "") + (i + 1)));
+      st.appendChild(document.createTextNode(s));
+      list.appendChild(st);
+    });
+    card.appendChild(list);
+    col.appendChild(card);
+    if (buttons) addButtons(col, buttons);
+    scrollDown();
+  }
+
+  function renderConfirmCard(col, c) {
+    var card = el("div", "card");
+    cardHead(card, "📋", c.title, c.subtitle);
+    var tiles = el("div", "tiles");
+    c.fields.forEach(function (f) {
+      var isText = f.name === "soil_texture";
+      var t = el("div", "tile" + (isText ? " wide" : ""));
+      var lab = el("div", "tl", f.label);
+      if (f.edited) lab.appendChild(el("span", "ed", c.edited_mark));
+      t.appendChild(lab);
+      t.appendChild(el("div", "tv" + (isText ? " text" : ""), f.value));
+      tiles.appendChild(t);
+    });
+    card.appendChild(tiles);
+    if (c.items && c.items.length) {
+      card.appendChild(el("div", "subhead", c.items_title));
+      c.items.forEach(function (it) {
+        var r = el("div", "irow");
+        var n = el("span", null, it.name);
+        if (it.edited) n.appendChild(el("span", "ed", c.edited_mark));
+        r.appendChild(n);
+        r.appendChild(el("span", "rv", it.rate));
+        card.appendChild(r);
+        if (it.warning) card.appendChild(el("div", "warn", "⚠ " + it.warning));
+      });
+    }
+    var ask = el("div", "ask");
+    ask.appendChild(el("div", "q", "✅ " + c.question));
+    ask.appendChild(el("div", "n", c.note));
+    card.appendChild(ask);
+    col.appendChild(card);
+  }
+
+  function copyText(text, onFail) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {}, onFail);
+    } else { onFail(); }
+  }
+  function addCopyButton(col, label, getText) {
+    var btn = el("button", "btn secondary", label);
+    btn.type = "button";
+    btn.addEventListener("click", function () {
+      copyText(getText(), function () {
+        if (col.querySelector(".copybox")) return;
+        var box = el("textarea", "copybox");
+        box.readOnly = true; box.value = getText();
+        box.setAttribute("aria-label", "ข้อความสำหรับคัดลอก");
+        col.appendChild(box);
+        box.focus(); box.select();
+      });
+      var old = btn.textContent;
+      btn.textContent = "คัดลอกแล้ว";
+      setTimeout(function () { btn.textContent = old; }, 1500);
+    });
+    var wrap = el("div", "btns");
+    wrap.appendChild(btn);
+    col.appendChild(wrap);
+  }
+
+  function renderTable(col, bubble) {
+    var t = bubble.table;
+    var wrap = el("div", "result");
+    wrap.appendChild(el("h2", null, t.heading));
+    var table = el("table", "plan");
+    var thead = el("thead"), hr = el("tr");
+    t.columns.forEach(function (c) { hr.appendChild(el("th", null, c)); });
+    thead.appendChild(hr); table.appendChild(thead);
+    var tbody = el("tbody");
+    t.rows.forEach(function (r) {
+      var tr = el("tr");
+      tr.appendChild(el("td", "name", r[0]));
+      var a = el("td", null, r[1] + " กก."); a.setAttribute("data-label", "ต่อไร่");
+      var b = el("td", null, r[2] + " กก."); b.setAttribute("data-label", "รวม");
+      var c = el("td", null, r[3]); c.setAttribute("data-label", "ราคาโดยประมาณ");
+      tr.appendChild(a); tr.appendChild(b); tr.appendChild(c);
+      tr.appendChild(el("td", "desc", r[4]));
+      tbody.appendChild(tr);
+    });
+    var tr = el("tr", "total");
+    tr.appendChild(el("td", "name", "ราคารวมโดยประมาณ"));
+    tr.appendChild(el("td", null, t.total_row[3]));
+    tbody.appendChild(tr);
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    col.appendChild(wrap);
+    addCopyButton(col, "คัดลอกข้อความตาราง", function () { return bubble.text; });
+  }
+
+  function renderScript(col, text) {
+    var card = el("div", "card");
+    cardHead(card, "🛒", "ข้อความไปบอกร้านปุ๋ย", null);
+    card.appendChild(el("div", "cbody", text));
+    col.appendChild(card);
+    addCopyButton(card, "คัดลอก", function () { return text; });
+  }
+
+  function section(card, cls, title, body) {
+    var s = el("div", "sec " + cls);
+    s.appendChild(el("div", "st", title));
+    if (typeof body === "string") s.appendChild(el("div", "sb", body));
+    else s.appendChild(body);
+    card.appendChild(s);
+    return s;
+  }
+  var PH_ICON = { acidic: "⚠️", alkaline: "⚠️", balanced: "✅" };
+
+  function renderPhCard(col, c) {
+    var card = el("div", "card");
+    cardHead(card, "🧪", c.title, c.subtitle);
+    var box = el("div", "phbox " + c.ph_class);
+    box.appendChild(el("div", "phval", c.ph));
+    var t = el("div");
+    t.appendChild(el("div", "phhead", (PH_ICON[c.ph_class] || "") + " " + c.headline));
+    t.appendChild(el("div", "phrange", c.range));
+    box.appendChild(t);
+    card.appendChild(box);
+    section(card, "warm", "📝 " + c.advice_title, c.advice);
+    section(card, "green", "💡 " + c.lab_title, c.lab);
+    col.appendChild(card);
+  }
+
+  function renderAdviceCard(col, s) {
+    var card = el("div", "card");
+    cardHead(card, "🌱", "คำแนะนำสำหรับแปลงของคุณ", null);
+    if (!s.summary_in_ph_card && s.summary) section(card, "warm", "📝 " + s.summary_title, s.summary);
+    if (s.guide && s.guide.length) {
+      var ul = el("ul");
+      s.guide.forEach(function (line) {
+        var li = el("li");
+        var i = line.indexOf(": ");
+        if (i > 0) {
+          li.appendChild(el("b", null, line.slice(0, i)));
+          li.appendChild(document.createTextNode(" " + line.slice(i + 2)));
+        } else { li.textContent = line; }
+        ul.appendChild(li);
+      });
+      section(card, "plain", "🧺 " + s.guide_title, ul);
+    }
+    if (s.effect) section(card, "green", "🌾 " + s.effect_title, s.effect);
+    col.appendChild(card);
+  }
+
+  function renderNotices(col, title, items) {
+    if (!items.length) return;
+    var card = el("div", "card");
+    card.appendChild(el("div", "subhead", "ℹ️ " + title));
+    var ul = el("ul", "nlist");
+    items.forEach(function (n) { ul.appendChild(el("li", null, n)); });
+    card.appendChild(ul);
+    col.appendChild(card);
+  }
+
+  function renderBubbles(bubbles) {
+    var hasTable = bubbles.some(function (b) { return b.kind === "table"; });
+    var seenTable = false;
+    bubbles.forEach(function (b) {
+      if (b.kind === "ph_summary" && b.card) { renderPhCard(botRow(), b.card); return; }
+      if (b.kind === "advice" && b.sections) { renderAdviceCard(botRow(), b.sections); return; }
+      if (b.notices) { renderNotices(botRow(), b.notices_title, b.notices); return; }
+      if (b.kind === "table") {
+        seenTable = true;
+        renderTable(botRow(), b);
+        return;
+      }
+      if (hasTable && b.kind === "text") {
+        if (!seenTable) { noteCard(b.text); return; }          // demo label before the table
+        if (b.text.indexOf(SCRIPT_HEADING) === 0) {
+          renderScript(botRow(), b.text.slice(SCRIPT_HEADING.length).replace(/^\s+/, ""));
+          return;
+        }
+        botRow().appendChild(el("div", "small", b.text));      // notices after the result
+        return;
+      }
+      var col = botRow();
+      if (b.card && b.card.type === "confirm_values") {
+        renderConfirmCard(col, b.card);
+      } else {
+        var bub = el("div", "bubble", b.text);
+        if (b.buttons && b.buttons.length && b.buttons[0].action === "restart" && b.text === ERR_TEXT) {
+          bub.className = "bubble error";
+          bub.textContent = "";
+          bub.appendChild(el("div", "title", "เกิดข้อผิดพลาด"));
+          bub.appendChild(document.createTextNode(b.text));
+        }
+        col.appendChild(bub);
+      }
+      if (b.buttons && b.buttons.length) addButtons(col, b.buttons);
+    });
+    scrollDown();
+  }
+
+  function errorBubble() {
+    var col = botRow();
+    var bub = el("div", "bubble error");
+    bub.appendChild(el("div", "title", "เกิดข้อผิดพลาด"));
+    bub.appendChild(document.createTextNode(ERR_TEXT));
+    col.appendChild(bub);
+    addButtons(col, [{ label: "เริ่มใหม่", action: "restart" }]);
+    scrollDown();
+  }
+
+  var waitRow = null;
+  function showWait(message) {
+    waitRow = botRow();
+    var b = el("div", "bubble");
+    var dots = el("span", "dots");
+    dots.setAttribute("aria-hidden", "true");
+    dots.appendChild(el("span")); dots.appendChild(el("span")); dots.appendChild(el("span"));
+    b.appendChild(dots);
+    b.appendChild(document.createTextNode(message));
+    waitRow.appendChild(b);
+    scrollDown();
+  }
+  function hideWait() {
+    if (waitRow && waitRow.parentNode) waitRow.parentNode.parentNode.removeChild(waitRow.parentNode);
+    waitRow = null;
+    lastBotRow = false;
+  }
+
+  function finish(promise) {
+    promise.then(function (r) {
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.json();
+    }).then(function (data) {
+      hideWait();
+      if (data.session_id) sessionId = data.session_id;
+      renderBubbles(data.bubbles || []);
+    }).catch(function () {
+      hideWait();
+      errorBubble();
+    }).then(function () {
+      setBusy(false);
+    });
+  }
+
+  function turn(fields, file, waitText) {
+    if (busy) return;
+    var form = new FormData();
+    form.append("session_id", sessionId || "");
+    Object.keys(fields).forEach(function (k) { if (fields[k] != null) form.append(k, fields[k]); });
+    if (file) form.append("image", file, file.name);
+    setBusy(true);
+    showWait(waitText);
+    finish(fetch("/api/chat", { method: "POST", body: form }));
+  }
+
+  function startSession() {
+    if (busy) return;
+    setBusy(true);
+    fetch("/api/start", { method: "POST" }).then(function (r) {
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.json();
+    }).then(function (data) {
+      sessionId = data.session_id || sessionId;
+      document.getElementById("badge").hidden = !data.stub;
+      var bubbles = data.bubbles || [];
+      if (data.stub) noteCard("ข้อมูลในเดโมนี้เป็นตัวอย่าง ไม่ใช่ใบวิเคราะห์จริง");
+      if (bubbles.length) {
+        noteCard(bubbles[0].text); // accuracy not validated notice
+        renderBubbles(bubbles.slice(1));
+      }
+    }).catch(function () {
+      errorBubble();
+    }).then(function () { setBusy(false); });
+  }
+
+  function openPicker() { if (!busy) fileInput.click(); }
+
+  function onBotButton(b) {
+    if (busy) return;
+    if (b.action === "upload_sheet") { openPicker(); return; }
+    if (b.action === "pick_file") { openPicker(); return; }
+    userRow(b.label);
+    var wait = b.action === "confirm" ? WAIT_THINK : "กำลังทำงาน...";
+    turn({ action: b.action, payload: b.payload }, null, wait);
+  }
+
+  function menu(id, fn) {
+    document.getElementById(id).addEventListener("click", function () { if (!busy) fn(this); });
+  }
+  function menuLabel(btn) { return btn.querySelector(".ic").textContent + " " + btn.textContent.replace(btn.querySelector(".ic").textContent, "").trim(); }
+
+  menu("m-sheet", function (btn) {
+    userRow(menuLabel(btn));
+    stepsCard(PHOTO_GUIDE, [{ label: "📷 เลือกรูปจากเครื่อง", action: "pick_file" }]);
+  });
+  menu("m-ph", function (btn) {
+    userRow(menuLabel(btn));
+    botRow().appendChild(el("div", "bubble", PH_NOT_READY));
+    addButtons(chat.lastChild.querySelector(".col"), [{ label: "✏️ พิมพ์ค่าด้วยตัวเอง", action: "manual_entry" }]);
+    scrollDown();
+  });
+  menu("m-cane", function (btn) { userRow(menuLabel(btn)); botText(CANE_NOT_READY); });
+  menu("m-manual", function (btn) {
+    userRow(menuLabel(btn));
+    turn({ action: "manual_entry" }, null, "กำลังทำงาน...");
+  });
+  menu("m-guide", function (btn) { userRow(menuLabel(btn)); stepsCard(USAGE_GUIDE); });
+  menu("m-chat", function () { botText(CHAT_HINT); textInput.focus(); });
+
+  document.getElementById("restart").addEventListener("click", function () {
+    if (busy) return;
+    userRow("เริ่มใหม่");
+    turn({ action: "restart" }, null, "กำลังทำงาน...");
+  });
+
+  fileInput.addEventListener("change", function () {
+    var f = fileInput.files && fileInput.files[0];
+    if (!f) return;
+    var url = URL.createObjectURL(f); // thumbnail stays in the browser
+    userRow("", url);
+    turn({}, f, WAIT_READ);
+    fileInput.value = "";
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  });
+
+  document.getElementById("inputbar").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var t = textInput.value.trim();
+    if (!t || busy) return;
+    textInput.value = "";
+    userRow(t);
+    turn({ text: t }, null, WAIT_THINK);
+  });
+
+  startSession();
+})();
+</script>
+</body>
+</html>

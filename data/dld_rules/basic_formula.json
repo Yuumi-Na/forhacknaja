@@ -1,0 +1,55 @@
+{
+  "label": "สูตรพื้นฐานตัวอย่างสำหรับสาธิต ไม่ใช่คำแนะนำจริง",
+  "placeholder": true,
+  "required_fields": ["om", "p", "k", "ca", "mg"],
+  "p_sufficient": 40,
+  "max_kg_per_rai": {"urea": 60, "dap": 60, "mop": 60},
+  "texture_status": {
+    "ทราย": "needs_action",
+    "ทรายร่วน": "low",
+    "ร่วนทราย": "low",
+    "ร่วน": "good",
+    "ร่วนปนทรายแป้ง": "good",
+    "ทรายแป้ง": "fair",
+    "ร่วนปนดินเหนียว": "good",
+    "ร่วนเหนียวปนทราย": "fair",
+    "ร่วนเหนียวปนทรายแป้ง": "fair",
+    "ดินเหนียวปนทราย": "fair",
+    "ดินเหนียวปนทรายแป้ง": "fair",
+    "ดินเหนียว": "low"
+  },
+  "bands": {
+    "om": [
+      {"band": "low", "min": 0, "status": "needs_action", "target_n_kg_per_rai": 14},
+      {"band": "medium", "min": 1.5, "status": "fair", "target_n_kg_per_rai": 10},
+      {"band": "high", "min": 3.5, "status": "good", "target_n_kg_per_rai": 6}
+    ],
+    "p": [
+      {"band": "low", "min": 0, "status": "low", "target_p2o5_kg_per_rai": 8},
+      {"band": "medium", "min": 10, "status": "fair", "target_p2o5_kg_per_rai": 4},
+      {"band": "high", "min": 25, "status": "good", "target_p2o5_kg_per_rai": 2}
+    ],
+    "k": [
+      {"band": "low", "min": 0, "status": "low", "target_k2o_kg_per_rai": 10},
+      {"band": "medium", "min": 60, "status": "fair", "target_k2o_kg_per_rai": 6},
+      {"band": "high", "min": 120, "status": "good", "target_k2o_kg_per_rai": 3}
+    ],
+    "ph": [
+      {"band": "very_low", "min": 0, "status": "needs_action"},
+      {"band": "low", "min": 5.5, "status": "low"},
+      {"band": "ok", "min": 6.0, "status": "good"},
+      {"band": "high", "min": 7.5, "status": "fair"},
+      {"band": "very_high", "min": 8.5, "status": "needs_action"}
+    ],
+    "ca": [
+      {"band": "low", "min": 0, "status": "low"},
+      {"band": "medium", "min": 400, "status": "fair"},
+      {"band": "high", "min": 1000, "status": "good"}
+    ],
+    "mg": [
+      {"band": "low", "min": 0, "status": "low"},
+      {"band": "medium", "min": 60, "status": "fair"},
+      {"band": "high", "min": 120, "status": "good"}
+    ]
+  }
+}

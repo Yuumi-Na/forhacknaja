@@ -1,6 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "my-team"
 version = "0.1.0"
 description = "Our team's project for the AI for All bootcamp."
 requires-python = ">=3.12"
-dependencies = ["strands-agents"]
+dependencies = [
+    "fastapi>=0.165.0",
+    "pillow>=13.0.0",
+    "python-multipart>=0.0.33",
+    "strands-agents",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+mordin = "mordin.main:run"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mordin"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.2.0",
+]

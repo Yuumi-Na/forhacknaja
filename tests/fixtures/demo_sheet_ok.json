@@ -1,0 +1,20 @@
+{
+    "om":  1.2,
+    "p":  8,
+    "k":  45,
+    "ca":  600,
+    "mg":  80,
+    "ph":  5.7,
+    "soil_texture":  "ร่วนทราย",
+    "sheet_recommendations":  [
+                                  {
+                                      "fertilizer":  "urea",
+                                      "rate_kg_per_rai":  20.98
+                                  },
+                                  {
+                                      "fertilizer":  "mop",
+                                      "rate_kg_per_rai":  12
+                                  }
+                              ],
+    "reason_code":  null
+}

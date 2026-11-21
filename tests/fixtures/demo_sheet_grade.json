@@ -1,0 +1,16 @@
+{
+    "om":  0.9,
+    "p":  6,
+    "k":  38,
+    "ca":  520,
+    "mg":  70,
+    "ph":  5.4,
+    "soil_texture":  "ทราย",
+    "sheet_recommendations":  [
+                                  {
+                                      "fertilizer":  "16-16-8",
+                                      "rate_kg_per_rai":  30
+                                  }
+                              ],
+    "reason_code":  null
+}
